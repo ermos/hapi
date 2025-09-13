@@ -1,7 +1,10 @@
+// Package hapi provides HTTP API query parameter parsing for filtering, sorting, and pagination.
+// It supports various filter operators, sorting directions, and pagination controls.
 package hapi
 
 import "fmt"
 
+// FilterOperator represents the comparison operator used in filter expressions.
 type FilterOperator string
 
 const (
@@ -20,6 +23,8 @@ const (
 	FilterOperatorLessOrEqual    FilterOperator = "le"
 )
 
+// Valid checks if the filter operator is valid.
+// Returns an error if the operator is not recognized.
 func (o FilterOperator) Valid() error {
 	switch o {
 	case FilterOperatorEqual,
@@ -37,9 +42,10 @@ func (o FilterOperator) Valid() error {
 		return nil
 	}
 
-	return fmt.Errorf("invalid operator: %s", o)
+	return fmt.Errorf("invalid operator: %q", o)
 }
 
+// IsList returns true if the operator expects multiple values (comma-separated).
 func (o FilterOperator) IsList() bool {
 	return o == FilterOperatorIn || o == FilterOperatorNotIn || o == FilterOperatorInLike || o == FilterOperatorNotInLike
 }

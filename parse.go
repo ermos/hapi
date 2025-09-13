@@ -7,19 +7,33 @@ import (
 	"strings"
 )
 
-func ParseFromRequest(r *http.Request) (result Result, err error) {
+// ParseFromRequest parses query parameters from an HTTP request.
+// Invalid parameters are silently ignored.
+func ParseFromRequest(r *http.Request) (Result, error) {
+	if r == nil || r.URL == nil {
+		return Result{}, fmt.Errorf("request or URL is nil")
+	}
 	return parseFromURL(r.URL.String(), false)
 }
 
-func ParseFromRequestStrict(r *http.Request) (result Result, err error) {
+// ParseFromRequestStrict parses query parameters from an HTTP request.
+// Returns an error for any invalid parameters.
+func ParseFromRequestStrict(r *http.Request) (Result, error) {
+	if r == nil || r.URL == nil {
+		return Result{}, fmt.Errorf("request or URL is nil")
+	}
 	return parseFromURL(r.URL.String(), true)
 }
 
-func Parse(url string) (result Result, err error) {
+// Parse parses query parameters from a URL string.
+// Invalid parameters are silently ignored.
+func Parse(url string) (Result, error) {
 	return parseFromURL(url, false)
 }
 
-func ParseStrict(url string) (result Result, err error) {
+// ParseStrict parses query parameters from a URL string.
+// Returns an error for any invalid parameters.
+func ParseStrict(url string) (Result, error) {
 	return parseFromURL(url, true)
 }
 
@@ -37,46 +51,40 @@ func parseFromURL(u string, strict bool) (result Result, err error) {
 		parts := strings.Split(filter, "=")
 		if parts[0] == "limit" {
 			if len(parts) != 2 {
-				if !strict {
-					continue
+				if strict {
+					return Result{}, fmt.Errorf("invalid limit filter format: %s", filter)
 				}
-
-				err = fmt.Errorf("invalid limit filter format: %s", filter)
-				return
+				continue
 			}
 
 			result.Limit = max(0, Value(parts[1]).Int())
 			continue
 		} else if parts[0] == "offset" {
 			if len(parts) != 2 {
-				if !strict {
-					continue
+				if strict {
+					return Result{}, fmt.Errorf("invalid offset filter format: %s", filter)
 				}
-
-				err = fmt.Errorf("invalid offset filter format: %s", filter)
-				return
+				continue
 			}
 
 			result.Offset = max(1, Value(parts[1]).Int())
 			continue
 		} else if parts[0] == "sort" {
 			if len(parts) != 2 {
-				if !strict {
-					continue
+				if strict {
+					return Result{}, fmt.Errorf("invalid sort filter format: %s", filter)
 				}
-
-				err = fmt.Errorf("invalid sort filter format: %s", filter)
-				return
+				continue
 			}
 
-			result.Sort, err = parseSortFromString(parts[1])
+			sort, err := parseSortFromString(parts[1])
 			if err != nil {
-				if !strict {
-					continue
+				if strict {
+					return Result{}, err
 				}
-
-				return
+				continue
 			}
+			result.Sort = sort
 
 			continue
 		}
@@ -100,23 +108,23 @@ func parseFromURL(u string, strict bool) (result Result, err error) {
 			operator = FilterOperator(fieldParts[1][:len(fieldParts[1])-1])
 		}
 
-		if err = operator.Valid(); err != nil {
-			if !strict {
-				continue
+		if err := operator.Valid(); err != nil {
+			if strict {
+				return Result{}, err
 			}
-			return
+			continue
 		}
 
 		if operator.IsList() {
 			for _, v := range strings.Split(value, ",") {
 				var unescaped string
 
-				unescaped, err = url.PathUnescape(v)
+				unescaped, err := url.PathUnescape(v)
 				if err != nil {
-					if !strict {
-						continue
+					if strict {
+						return Result{}, fmt.Errorf("failed to unescape value %q: %w", v, err)
 					}
-					return
+					continue
 				}
 
 				values = append(values, Value(unescaped))
@@ -124,12 +132,12 @@ func parseFromURL(u string, strict bool) (result Result, err error) {
 		} else {
 			var unescaped string
 
-			unescaped, err = url.PathUnescape(value)
+			unescaped, err := url.PathUnescape(value)
 			if err != nil {
-				if !strict {
-					continue
+				if strict {
+					return Result{}, fmt.Errorf("failed to unescape value %q: %w", value, err)
 				}
-				return
+				continue
 			}
 
 			values = append(values, Value(unescaped))
