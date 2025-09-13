@@ -10,7 +10,7 @@ import (
 
 func ExampleParse() {
 	// Parse a URL with various query parameters
-	url := "http://api.example.com/users?name[lk]=John%25&age[ge]=18&status[in]=active,pending&limit=25&offset=50&sort=created_at:desc"
+	url := "http://api.example.com/users?name[lk]=John%25&age[ge]=18&status[in]=active,pending&page=25&per_page=50&sort=created_at:desc"
 
 	result, err := hapi.Parse(url)
 	if err != nil {
@@ -19,12 +19,12 @@ func ExampleParse() {
 
 	fmt.Printf("Filters: %d\n", len(result.Filters))
 	fmt.Printf("Sort: %s %s\n", result.Sort.Field, result.Sort.Direction)
-	fmt.Printf("Limit: %d, Offset: %d\n", result.Limit, result.Offset)
+	fmt.Printf("Page: %d, PerPage: %d\n", result.Page, result.PerPage)
 
 	// Output:
 	// Filters: 3
 	// Sort: created_at desc
-	// Limit: 25, Offset: 50
+	// Page: 25, PerPage: 50
 }
 
 func ExampleParseFromRequest() {
@@ -87,4 +87,3 @@ func ExampleValue_conversion() {
 	// Int64: 123
 	// Float64: 123.000000
 }
-

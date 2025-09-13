@@ -9,7 +9,7 @@ A clean, elegant Go library for parsing HTTP API query parameters with support f
 
 - **Rich Filtering**: Support for 12 different operators (`eq`, `ne`, `gt`, `lt`, `ge`, `le`, `lk`, `nlk`, `in`, `nin`, `inlk`, `ninlk`)
 - **Flexible Sorting**: Parse field and direction from query parameters
-- **Pagination Support**: Built-in limit and offset handling
+- **Pagination Support**: Built-in per page and page handling
 - **Type Conversion**: Automatic conversion to common Go types (int, float64, string)
 - **Strict Mode**: Optional strict parsing with comprehensive error handling
 - **Zero Dependencies**: Pure Go implementation with only standard library
@@ -33,7 +33,7 @@ import (
 )
 
 func main() {
-    url := "http://api.example.com/users?name[lk]=John%25&age[ge]=18&status[in]=active,pending&limit=25&offset=50&sort=created_at:desc"
+    url := "http://api.example.com/users?name[lk]=John%25&age[ge]=18&status[in]=active,pending&page=25&per_page=50&sort=created_at:desc"
 
     result, err := hapi.Parse(url)
     if err != nil {
@@ -42,7 +42,7 @@ func main() {
 
     fmt.Printf("Found %d filters\n", len(result.Filters))
     fmt.Printf("Sort by: %s %s\n", result.Sort.Field, result.Sort.Direction)
-    fmt.Printf("Pagination: limit=%d, offset=%d\n", result.Limit, result.Offset)
+    fmt.Printf("Pagination: page=%d, per_page=%d\n", result.Page, result.PerPage)
 }
 ```
 
@@ -79,7 +79,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     // Use parsed result for database queries
     applyFiltersToQuery(result.Filters)
     applySortingToQuery(result.Sort)
-    applyPaginationToQuery(result.Limit, result.Offset)
+    applyPaginationToQuery(result.Page, result.PerPage)
 }
 ```
 
@@ -128,8 +128,8 @@ sort=created_at:desc
 
 ### Pagination
 ```
-limit=25
-offset=50
+page=25
+per_page=50
 ```
 
 ## 🏗️ API Reference
@@ -156,8 +156,8 @@ func ParseFromRequestStrict(r *http.Request) (Result, error)
 type Result struct {
     Filters Filters // Collection of filter conditions
     Sort    Sort    // Sorting configuration
-    Limit   int     // Maximum results (0 = unlimited)
-    Offset  int     // Skip results (1-based)
+    Page    int     // Current page number (1-based)
+    PerPage int     // Number of items per page
 }
 ```
 

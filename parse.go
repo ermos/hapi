@@ -49,25 +49,25 @@ func parseFromURL(u string, strict bool) (result Result, err error) {
 		var values Values
 
 		parts := strings.Split(filter, "=")
-		if parts[0] == "limit" {
+		if parts[0] == "per_page" {
 			if len(parts) != 2 {
 				if strict {
-					return Result{}, fmt.Errorf("invalid limit filter format: %s", filter)
+					return Result{}, fmt.Errorf("invalid per_page filter format: %s", filter)
 				}
 				continue
 			}
 
-			result.Limit = max(0, Value(parts[1]).Int())
+			result.PerPage = max(1, Value(parts[1]).Int())
 			continue
-		} else if parts[0] == "offset" {
+		} else if parts[0] == "page" {
 			if len(parts) != 2 {
 				if strict {
-					return Result{}, fmt.Errorf("invalid offset filter format: %s", filter)
+					return Result{}, fmt.Errorf("invalid page filter format: %s", filter)
 				}
 				continue
 			}
 
-			result.Offset = max(1, Value(parts[1]).Int())
+			result.Page = max(1, Value(parts[1]).Int())
 			continue
 		} else if parts[0] == "sort" {
 			if len(parts) != 2 {
