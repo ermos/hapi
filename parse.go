@@ -9,35 +9,42 @@ import (
 
 // ParseFromRequest parses query parameters from an HTTP request.
 // Invalid parameters are silently ignored.
-func ParseFromRequest(r *http.Request) (Result, error) {
+func ParseFromRequest(r *http.Request, opts Options) (Result, error) {
 	if r == nil || r.URL == nil {
 		return Result{}, fmt.Errorf("request or URL is nil")
 	}
-	return parseFromURL(r.URL.String(), false)
+	return parseFromURL(r.URL.String(), opts, false)
 }
 
 // ParseFromRequestStrict parses query parameters from an HTTP request.
 // Returns an error for any invalid parameters.
-func ParseFromRequestStrict(r *http.Request) (Result, error) {
+func ParseFromRequestStrict(r *http.Request, opts Options) (Result, error) {
 	if r == nil || r.URL == nil {
 		return Result{}, fmt.Errorf("request or URL is nil")
 	}
-	return parseFromURL(r.URL.String(), true)
+	return parseFromURL(r.URL.String(), opts, true)
 }
 
 // Parse parses query parameters from a URL string.
 // Invalid parameters are silently ignored.
-func Parse(url string) (Result, error) {
-	return parseFromURL(url, false)
+func Parse(url string, opts Options) (Result, error) {
+	return parseFromURL(url, opts, false)
 }
 
 // ParseStrict parses query parameters from a URL string.
 // Returns an error for any invalid parameters.
-func ParseStrict(url string) (Result, error) {
-	return parseFromURL(url, true)
+func ParseStrict(url string, opts Options) (Result, error) {
+	return parseFromURL(url, opts, true)
 }
 
-func parseFromURL(u string, strict bool) (result Result, err error) {
+func parseFromURL(u string, opts Options, strict bool) (result Result, err error) {
+	result = Result{
+		PerPage: opts.DefaultPerPage,
+		Page:    1,
+		Sorts:   make(Sorts, 0),
+		Filters: make(Filters, 0),
+	}
+
 	res, err := url.Parse(u)
 	if err != nil {
 		return
@@ -57,7 +64,7 @@ func parseFromURL(u string, strict bool) (result Result, err error) {
 				continue
 			}
 
-			result.PerPage = max(1, Value(parts[1]).Int())
+			result.PerPage = min(max(1, Value(parts[1]).Int()), opts.MaxPerPage)
 			continue
 		} else if parts[0] == "page" {
 			if len(parts) != 2 {
@@ -70,6 +77,7 @@ func parseFromURL(u string, strict bool) (result Result, err error) {
 			result.Page = max(1, Value(parts[1]).Int())
 			continue
 		} else if parts[0] == "sort" {
+			var sort Sort
 			if len(parts) != 2 {
 				if strict {
 					return Result{}, fmt.Errorf("invalid sort filter format: %s", filter)
@@ -77,14 +85,31 @@ func parseFromURL(u string, strict bool) (result Result, err error) {
 				continue
 			}
 
-			sort, err := parseSortFromString(parts[1])
+			sort, err = parseSortFromString(parts[1])
 			if err != nil {
 				if strict {
 					return Result{}, err
 				}
 				continue
 			}
-			result.Sort = sort
+
+			if len(opts.AllowedSorts) > 0 && !containsString(opts.AllowedSorts, sort.Field) {
+				if strict {
+					return Result{}, fmt.Errorf("sorting by field %q is not allowed", sort.Field)
+				}
+
+				continue
+			}
+
+			result.Sorts = append(result.Sorts, sort)
+
+			continue
+		}
+
+		if len(opts.AllowedFilters) > 0 && !containsString(opts.AllowedFilters, parts[0]) {
+			if strict {
+				return Result{}, fmt.Errorf("filtering by field %q is not allowed", parts[0])
+			}
 
 			continue
 		}
@@ -108,7 +133,7 @@ func parseFromURL(u string, strict bool) (result Result, err error) {
 			operator = FilterOperator(fieldParts[1][:len(fieldParts[1])-1])
 		}
 
-		if err := operator.Valid(); err != nil {
+		if err = operator.Valid(); err != nil {
 			if strict {
 				return Result{}, err
 			}
@@ -119,7 +144,7 @@ func parseFromURL(u string, strict bool) (result Result, err error) {
 			for _, v := range strings.Split(value, ",") {
 				var unescaped string
 
-				unescaped, err := url.PathUnescape(v)
+				unescaped, err = url.PathUnescape(v)
 				if err != nil {
 					if strict {
 						return Result{}, fmt.Errorf("failed to unescape value %q: %w", v, err)
@@ -132,7 +157,7 @@ func parseFromURL(u string, strict bool) (result Result, err error) {
 		} else {
 			var unescaped string
 
-			unescaped, err := url.PathUnescape(value)
+			unescaped, err = url.PathUnescape(value)
 			if err != nil {
 				if strict {
 					return Result{}, fmt.Errorf("failed to unescape value %q: %w", value, err)

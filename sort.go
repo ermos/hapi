@@ -5,6 +5,9 @@ import (
 	"strings"
 )
 
+// Sorts represents a collection of Sort configurations.
+type Sorts []Sort
+
 // Sort represents a sorting configuration with field and direction.
 type Sort struct {
 	Field     string        `json:"field"`     // The field to sort by

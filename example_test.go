@@ -12,13 +12,20 @@ func ExampleParse() {
 	// Parse a URL with various query parameters
 	url := "http://api.example.com/users?name[lk]=John%25&age[ge]=18&status[in]=active,pending&page=25&per_page=50&sort=created_at:desc"
 
-	result, err := hapi.Parse(url)
+	opts := hapi.Options{
+		DefaultPerPage: 10,
+		MaxPerPage:     100,
+	}
+
+	result, err := hapi.Parse(url, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Printf("Filters: %d\n", len(result.Filters))
-	fmt.Printf("Sort: %s %s\n", result.Sort.Field, result.Sort.Direction)
+	if len(result.Sorts) > 0 {
+		fmt.Printf("Sort: %s %s\n", result.Sorts[0].Field, result.Sorts[0].Direction)
+	}
 	fmt.Printf("Page: %d, PerPage: %d\n", result.Page, result.PerPage)
 
 	// Output:
@@ -30,7 +37,12 @@ func ExampleParse() {
 func ExampleParseFromRequest() {
 	// In a real HTTP handler
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		result, err := hapi.ParseFromRequest(r)
+		opts := hapi.Options{
+			DefaultPerPage: 10,
+			MaxPerPage:     100,
+		}
+
+		result, err := hapi.ParseFromRequest(r, opts)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -86,4 +98,50 @@ func ExampleValue_conversion() {
 	// Int: 123
 	// Int64: 123
 	// Float64: 123.000000
+}
+
+func ExampleNewOptions() {
+	// Create options with custom configuration
+	opts := hapi.NewOptions(
+		hapi.WithDefaultPerPage(25),
+		hapi.WithMaxPerPage(200),
+		hapi.WithAllowedSorts([]string{"name", "created_at", "updated_at"}),
+		hapi.WithAllowedFilters([]string{"status", "type", "name"}),
+	)
+
+	url := "http://api.example.com/users?name=John&sort=created_at:desc&per_page=50"
+	result, err := hapi.Parse(url, *opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("PerPage: %d (default was %d, requested 50)\n", result.PerPage, opts.DefaultPerPage)
+	fmt.Printf("Allowed sorts: %v\n", opts.AllowedSorts)
+	fmt.Printf("Allowed filters: %v\n", opts.AllowedFilters)
+
+	// Output:
+	// PerPage: 50 (default was 25, requested 50)
+	// Allowed sorts: [name created_at updated_at]
+	// Allowed filters: [status type name]
+}
+
+func ExampleParseStrict() {
+	// Use strict mode with allowed fields
+	opts := hapi.NewOptions(
+		hapi.WithDefaultPerPage(10),
+		hapi.WithMaxPerPage(100),
+		hapi.WithAllowedSorts([]string{"name", "age"}),
+		hapi.WithAllowedFilters([]string{"name", "status"}),
+	)
+
+	// This URL contains a disallowed filter field "salary"
+	url := "http://api.example.com/users?name=John&salary=100000"
+
+	_, err := hapi.ParseStrict(url, *opts)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+
+	// Output:
+	// Error: filtering by field "salary" is not allowed
 }
