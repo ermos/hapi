@@ -311,6 +311,53 @@ func TestParse(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "Multiple sorts comma-separated",
+			url:  "http://example.com?sort=name:asc,age:desc",
+			opts: Options{DefaultPerPage: 10, MaxPerPage: 100},
+			want: Result{
+				Filters: Filters{},
+				Sorts: Sorts{
+					{Field: "name", Direction: SortDirectionAsc},
+					{Field: "age", Direction: SortDirectionDesc},
+				},
+				Page:    1,
+				PerPage: 10,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Multiple sorts comma-separated with spaces",
+			url:  "http://example.com?sort=name:asc, age:desc, created_at:asc",
+			opts: Options{DefaultPerPage: 10, MaxPerPage: 100},
+			want: Result{
+				Filters: Filters{},
+				Sorts: Sorts{
+					{Field: "name", Direction: SortDirectionAsc},
+					{Field: "age", Direction: SortDirectionDesc},
+					{Field: "created_at", Direction: SortDirectionAsc},
+				},
+				Page:    1,
+				PerPage: 10,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Mixed sorts - comma-separated and multiple params",
+			url:  "http://example.com?sort=name:asc,age:desc&sort=status:asc",
+			opts: Options{DefaultPerPage: 10, MaxPerPage: 100},
+			want: Result{
+				Filters: Filters{},
+				Sorts: Sorts{
+					{Field: "name", Direction: SortDirectionAsc},
+					{Field: "age", Direction: SortDirectionDesc},
+					{Field: "status", Direction: SortDirectionAsc},
+				},
+				Page:    1,
+				PerPage: 10,
+			},
+			wantErr: false,
+		},
+		{
 			name: "Complex query",
 			url:  "http://example.com?name[lk]=John%25&age[ge]=18&status[in]=active,pending&per_page=25&page=3&sort=created_at:desc",
 			opts: Options{DefaultPerPage: 10, MaxPerPage: 100},
@@ -523,6 +570,37 @@ func TestParseStrict(t *testing.T) {
 				PerPage: 10,
 			},
 			wantErr: false,
+		},
+		{
+			name: "Multiple sorts comma-separated in strict mode",
+			url:  "http://example.com?sort=name:asc,age:desc",
+			opts: Options{
+				DefaultPerPage: 10,
+				MaxPerPage:     100,
+				AllowedSorts:   []string{"name", "age"},
+			},
+			want: Result{
+				Filters: Filters{},
+				Sorts: Sorts{
+					{Field: "name", Direction: SortDirectionAsc},
+					{Field: "age", Direction: SortDirectionDesc},
+				},
+				Page:    1,
+				PerPage: 10,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Multiple sorts with disallowed field in strict mode",
+			url:  "http://example.com?sort=name:asc,salary:desc",
+			opts: Options{
+				DefaultPerPage: 10,
+				MaxPerPage:     100,
+				AllowedSorts:   []string{"name", "age"},
+			},
+			want:    Result{},
+			wantErr: true,
+			errMsg:  "sorting by field \"salary\" is not allowed",
 		},
 	}
 

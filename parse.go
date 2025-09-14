@@ -77,7 +77,6 @@ func parseFromURL(u string, opts Options, strict bool) (result Result, err error
 			result.Page = max(1, Value(parts[1]).Int())
 			continue
 		} else if parts[0] == "sort" {
-			var sort Sort
 			if len(parts) != 2 {
 				if strict {
 					return Result{}, fmt.Errorf("invalid sort filter format: %s", filter)
@@ -85,23 +84,31 @@ func parseFromURL(u string, opts Options, strict bool) (result Result, err error
 				continue
 			}
 
-			sort, err = parseSortFromString(parts[1])
-			if err != nil {
-				if strict {
-					return Result{}, err
-				}
-				continue
-			}
-
-			if len(opts.AllowedSorts) > 0 && !containsString(opts.AllowedSorts, sort.Field) {
-				if strict {
-					return Result{}, fmt.Errorf("sorting by field %q is not allowed", sort.Field)
+			// Split by comma to handle multiple sorts like "name:asc,age:desc"
+			sortParams := strings.Split(parts[1], ",")
+			for _, sortParam := range sortParams {
+				sortParam = strings.TrimSpace(sortParam)
+				if sortParam == "" {
+					continue
 				}
 
-				continue
-			}
+				sort, err := parseSortFromString(sortParam)
+				if err != nil {
+					if strict {
+						return Result{}, err
+					}
+					continue
+				}
 
-			result.Sorts = append(result.Sorts, sort)
+				if len(opts.AllowedSorts) > 0 && !containsString(opts.AllowedSorts, sort.Field) {
+					if strict {
+						return Result{}, fmt.Errorf("sorting by field %q is not allowed", sort.Field)
+					}
+					continue
+				}
+
+				result.Sorts = append(result.Sorts, sort)
+			}
 
 			continue
 		}

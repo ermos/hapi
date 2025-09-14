@@ -145,3 +145,29 @@ func ExampleParseStrict() {
 	// Output:
 	// Error: filtering by field "salary" is not allowed
 }
+
+func ExampleParse_multipleSorts() {
+	// Parse a URL with multiple sorts using comma separation
+	url := "http://api.example.com/users?sort=name:asc,age:desc,created_at:asc"
+
+	opts := hapi.Options{
+		DefaultPerPage: 10,
+		MaxPerPage:     100,
+	}
+
+	result, err := hapi.Parse(url, opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Number of sorts: %d\n", len(result.Sorts))
+	for i, sort := range result.Sorts {
+		fmt.Printf("Sort %d: %s %s\n", i+1, sort.Field, sort.Direction)
+	}
+
+	// Output:
+	// Number of sorts: 3
+	// Sort 1: name asc
+	// Sort 2: age desc
+	// Sort 3: created_at asc
+}
