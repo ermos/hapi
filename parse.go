@@ -159,7 +159,7 @@ func parseFromURL(u string, opts Options, strict bool) (Result, error) {
 
 		if operator.IsList() {
 			for _, v := range strings.Split(value, ",") {
-				unescaped, err := url.PathUnescape(v)
+				unescaped, err := url.QueryUnescape(v)
 				if err != nil {
 					if strict {
 						return Result{}, fmt.Errorf("failed to unescape value %q: %w", v, err)
@@ -170,7 +170,7 @@ func parseFromURL(u string, opts Options, strict bool) (Result, error) {
 				values = append(values, Value(unescaped))
 			}
 		} else {
-			unescaped, err := url.PathUnescape(value)
+			unescaped, err := url.QueryUnescape(value)
 			if err != nil {
 				if strict {
 					return Result{}, fmt.Errorf("failed to unescape value %q: %w", value, err)
