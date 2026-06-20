@@ -11,7 +11,7 @@ A clean, elegant Go library for parsing HTTP API query parameters with support f
 - **Flexible Configuration**: Options system with validation and field restrictions
 - **Sort Support**: Parse single and multiple sort parameters with directions (`asc`, `desc`)
 - **Pagination Support**: Built-in per page and page handling with configurable limits
-- **Type Conversion**: Automatic conversion to common Go types (int, float64, string)
+- **Type Conversion**: Automatic conversion to common Go types (string, int, int64, float64, bool)
 - **Strict Mode**: Optional strict parsing with comprehensive error handling
 - **Zero Dependencies**: Pure Go implementation with only standard library
 
@@ -356,6 +356,7 @@ str := value.String()
 num := value.Int()
 bigNum := value.Int64()
 decimal := value.Float64()
+flag := value.Bool() // "true"/"false", "1"/"0", "t"/"f" (see strconv.ParseBool)
 ```
 
 ## 📄 License
