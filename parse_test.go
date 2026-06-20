@@ -770,8 +770,8 @@ func TestParseOptionsIntegration(t *testing.T) {
 				if err != nil {
 					t.Errorf("Unexpected error: %v", err)
 				}
-				if result.PerPage != 0 { // DefaultPerPage is 0 when not set
-					t.Errorf("Expected PerPage = 0, got %d", result.PerPage)
+				if result.PerPage != defaultPerPage { // falls back to the package default
+					t.Errorf("Expected PerPage = %d, got %d", defaultPerPage, result.PerPage)
 				}
 			},
 		},
@@ -874,9 +874,9 @@ func TestParseOptionsIntegration(t *testing.T) {
 				if err != nil {
 					t.Errorf("Unexpected error: %v", err)
 				}
-				// When MaxPerPage is 0, it should be treated as no limit
-				if result.PerPage != 0 {
-					t.Errorf("Expected PerPage = 0 (no value should pass through max(1, min(50, 0))), got %d", result.PerPage)
+				// MaxPerPage of 0 falls back to the package default cap.
+				if result.PerPage != 50 {
+					t.Errorf("Expected PerPage = 50, got %d", result.PerPage)
 				}
 			},
 		},

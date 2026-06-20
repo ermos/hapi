@@ -1,5 +1,11 @@
 package hapi
 
+// Default pagination values applied when Options leaves them unset.
+const (
+	defaultPerPage    = 10
+	defaultMaxPerPage = 100
+)
+
 // Options defines configuration options for parsing and validating query parameters.
 type Options struct {
 	DefaultPerPage int
@@ -13,8 +19,8 @@ type OptionFunc func(*Options)
 // NewOptions creates a new Options instance with default values.
 func NewOptions(opts ...OptionFunc) *Options {
 	options := &Options{
-		DefaultPerPage: 10,
-		MaxPerPage:     100,
+		DefaultPerPage: defaultPerPage,
+		MaxPerPage:     defaultMaxPerPage,
 		AllowedSorts:   []string{},
 		AllowedFilters: []string{},
 	}
