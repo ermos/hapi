@@ -37,8 +37,8 @@ func ParseStrict(url string, opts Options) (Result, error) {
 	return parseFromURL(url, opts, true)
 }
 
-func parseFromURL(u string, opts Options, strict bool) (result Result, err error) {
-	result = Result{
+func parseFromURL(u string, opts Options, strict bool) (Result, error) {
+	result := Result{
 		PerPage: opts.DefaultPerPage,
 		Page:    1,
 		Sorts:   make(Sorts, 0),
@@ -47,7 +47,7 @@ func parseFromURL(u string, opts Options, strict bool) (result Result, err error
 
 	res, err := url.Parse(u)
 	if err != nil {
-		return
+		return Result{}, err
 	}
 
 	q := res.RawQuery
@@ -146,7 +146,7 @@ func parseFromURL(u string, opts Options, strict bool) (result Result, err error
 			field = field[:open]
 		}
 
-		if err = operator.Valid(); err != nil {
+		if err := operator.Valid(); err != nil {
 			if strict {
 				return Result{}, err
 			}
@@ -155,9 +155,7 @@ func parseFromURL(u string, opts Options, strict bool) (result Result, err error
 
 		if operator.IsList() {
 			for _, v := range strings.Split(value, ",") {
-				var unescaped string
-
-				unescaped, err = url.PathUnescape(v)
+				unescaped, err := url.PathUnescape(v)
 				if err != nil {
 					if strict {
 						return Result{}, fmt.Errorf("failed to unescape value %q: %w", v, err)
@@ -168,9 +166,7 @@ func parseFromURL(u string, opts Options, strict bool) (result Result, err error
 				values = append(values, Value(unescaped))
 			}
 		} else {
-			var unescaped string
-
-			unescaped, err = url.PathUnescape(value)
+			unescaped, err := url.PathUnescape(value)
 			if err != nil {
 				if strict {
 					return Result{}, fmt.Errorf("failed to unescape value %q: %w", value, err)
@@ -188,5 +184,5 @@ func parseFromURL(u string, opts Options, strict bool) (result Result, err error
 		})
 	}
 
-	return
+	return result, nil
 }
