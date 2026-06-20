@@ -39,8 +39,17 @@ func ParseStrict(url string, opts Options) (Result, error) {
 }
 
 func parseFromURL(u string, opts Options, strict bool) (Result, error) {
+	maxPerPage := opts.MaxPerPage
+	if maxPerPage <= 0 {
+		maxPerPage = defaultMaxPerPage
+	}
+	perPage := opts.DefaultPerPage
+	if perPage <= 0 {
+		perPage = defaultPerPage
+	}
+
 	result := Result{
-		PerPage: opts.DefaultPerPage,
+		PerPage: min(perPage, maxPerPage),
 		Page:    1,
 		Sorts:   make(Sorts, 0),
 		Filters: make(Filters, 0),
@@ -69,7 +78,7 @@ func parseFromURL(u string, opts Options, strict bool) (Result, error) {
 				continue
 			}
 
-			result.PerPage = min(max(1, Value(parts[1]).Int()), opts.MaxPerPage)
+			result.PerPage = min(max(1, Value(parts[1]).Int()), maxPerPage)
 			continue
 		} else if parts[0] == "page" {
 			if len(parts) != 2 {
