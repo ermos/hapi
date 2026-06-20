@@ -208,9 +208,7 @@ func TestParse(t *testing.T) {
 			url:  "",
 			opts: Options{DefaultPerPage: 10, MaxPerPage: 100},
 			want: Result{
-				Filters: Filters{
-					{Field: "", Operator: FilterOperatorEqual, Values: Values{""}},
-				},
+				Filters: Filters{},
 				Sorts:   Sorts{},
 				Page:    1,
 				PerPage: 10,
@@ -927,9 +925,9 @@ func TestParseEdgeCases(t *testing.T) {
 				if err != nil {
 					t.Errorf("Unexpected error: %v", err)
 				}
-				// An empty query string results in a single empty filter
-				if len(result.Filters) != 1 || result.Filters[0].Field != "" {
-					t.Errorf("Expected single empty filter, got %v", result.Filters)
+				// An empty query string results in no filters
+				if len(result.Filters) != 0 {
+					t.Errorf("Expected no filters, got %v", result.Filters)
 				}
 			},
 		},
