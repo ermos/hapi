@@ -134,10 +134,16 @@ func parseFromURL(u string, opts Options, strict bool) (result Result, err error
 		operator := FilterOperatorEqual
 		value := parts[1]
 
-		if strings.Contains(field, "[") {
-			fieldParts := strings.Split(field, "[")
-			field = fieldParts[0]
-			operator = FilterOperator(fieldParts[1][:len(fieldParts[1])-1])
+		if open := strings.IndexByte(field, '['); open >= 0 {
+			if !strings.HasSuffix(field, "]") {
+				// Malformed operator bracket, e.g. "name[" or "name[gt".
+				if strict {
+					return Result{}, fmt.Errorf("invalid operator format: %s", field)
+				}
+				continue
+			}
+			operator = FilterOperator(field[open+1 : len(field)-1])
+			field = field[:open]
 		}
 
 		if err = operator.Valid(); err != nil {
