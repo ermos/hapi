@@ -59,7 +59,7 @@ func parseFromURL(u string, opts Options, strict bool) (Result, error) {
 
 		var values Values
 
-		parts := strings.Split(filter, "=")
+		parts := strings.SplitN(filter, "=", 2)
 		if parts[0] == "per_page" {
 			if len(parts) != 2 {
 				if strict {
