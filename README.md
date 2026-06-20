@@ -1,5 +1,6 @@
 # 🚀 HAPI - HTTP API Query Parser
 
+[![CI](https://github.com/ermos/hapi/actions/workflows/ci.yml/badge.svg)](https://github.com/ermos/hapi/actions/workflows/ci.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/ermos/hapi.svg)](https://pkg.go.dev/github.com/ermos/hapi)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ermos/hapi)](https://goreportcard.com/report/github.com/ermos/hapi)
 
