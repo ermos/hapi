@@ -53,6 +53,10 @@ func parseFromURL(u string, opts Options, strict bool) (Result, error) {
 	q := res.RawQuery
 
 	for _, filter := range strings.Split(q, "&") {
+		if filter == "" {
+			continue
+		}
+
 		var values Values
 
 		parts := strings.Split(filter, "=")
