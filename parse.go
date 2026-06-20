@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 )
 
@@ -104,7 +105,7 @@ func parseFromURL(u string, opts Options, strict bool) (Result, error) {
 					continue
 				}
 
-				if len(opts.AllowedSorts) > 0 && !containsString(opts.AllowedSorts, sort.Field) {
+				if len(opts.AllowedSorts) > 0 && !slices.Contains(opts.AllowedSorts, sort.Field) {
 					if strict {
 						return Result{}, fmt.Errorf("sorting by field %q is not allowed", sort.Field)
 					}
@@ -117,7 +118,7 @@ func parseFromURL(u string, opts Options, strict bool) (Result, error) {
 			continue
 		}
 
-		if len(opts.AllowedFilters) > 0 && !containsString(opts.AllowedFilters, parts[0]) {
+		if len(opts.AllowedFilters) > 0 && !slices.Contains(opts.AllowedFilters, parts[0]) {
 			if strict {
 				return Result{}, fmt.Errorf("filtering by field %q is not allowed", parts[0])
 			}
