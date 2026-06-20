@@ -14,7 +14,7 @@ func ParseFromRequest(r *http.Request, opts Options) (Result, error) {
 	if r == nil || r.URL == nil {
 		return Result{}, fmt.Errorf("request or URL is nil")
 	}
-	return parseFromURL(r.URL.String(), opts, false)
+	return parseQuery(r.URL.RawQuery, opts, false)
 }
 
 // ParseFromRequestStrict parses query parameters from an HTTP request.
@@ -23,22 +23,30 @@ func ParseFromRequestStrict(r *http.Request, opts Options) (Result, error) {
 	if r == nil || r.URL == nil {
 		return Result{}, fmt.Errorf("request or URL is nil")
 	}
-	return parseFromURL(r.URL.String(), opts, true)
+	return parseQuery(r.URL.RawQuery, opts, true)
 }
 
 // Parse parses query parameters from a URL string.
 // Invalid parameters are silently ignored.
-func Parse(url string, opts Options) (Result, error) {
-	return parseFromURL(url, opts, false)
+func Parse(rawURL string, opts Options) (Result, error) {
+	return parseFromURL(rawURL, opts, false)
 }
 
 // ParseStrict parses query parameters from a URL string.
 // Returns an error for any invalid parameters.
-func ParseStrict(url string, opts Options) (Result, error) {
-	return parseFromURL(url, opts, true)
+func ParseStrict(rawURL string, opts Options) (Result, error) {
+	return parseFromURL(rawURL, opts, true)
 }
 
-func parseFromURL(u string, opts Options, strict bool) (Result, error) {
+func parseFromURL(rawURL string, opts Options, strict bool) (Result, error) {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return Result{}, err
+	}
+	return parseQuery(u.RawQuery, opts, strict)
+}
+
+func parseQuery(rawQuery string, opts Options, strict bool) (Result, error) {
 	maxPerPage := opts.MaxPerPage
 	if maxPerPage <= 0 {
 		maxPerPage = defaultMaxPerPage
@@ -55,14 +63,7 @@ func parseFromURL(u string, opts Options, strict bool) (Result, error) {
 		Filters: make(Filters, 0),
 	}
 
-	res, err := url.Parse(u)
-	if err != nil {
-		return Result{}, err
-	}
-
-	q := res.RawQuery
-
-	for _, filter := range strings.Split(q, "&") {
+	for _, filter := range strings.Split(rawQuery, "&") {
 		if filter == "" {
 			continue
 		}
